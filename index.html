@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>RUNNER GAME</title>
+    <style>
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #000000;
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #ui {
+            display: flex;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+        #game {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        #game > span {
+            position: absolute;
+            z-index: 5;
+        }
+        .progressBar { 
+            position: relative;
+            height: 20px;
+            width: 95%;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #555;
+            padding: 3px;
+            box-shadow: inset 0 -1px 1px rgba(255,255,255,0.3);
+            border-radius: 5px;
+            z-index: 2;
+        }
+        .progressBar > span {
+            display: block;
+            height: 100%;
+            background-color: rgb(43,194,83);
+            box-shadow: 
+                inset 0 2px 9px  rgba(255,255,255,0.3),
+                inset 0 -2px 6px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+            border-radius: 5px;
+        }
+        #score {
+            color: white;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: Arial;
+        }
+        #footer {
+            position: absolute;
+            width: 100%;
+            display: flex;
+            bottom: 0;
+            background-color: gray;
+            align-items: center;
+            justify-content: center;
+        }
+        #footer > div {
+            display: flex;
+            width: 50px;
+            height: 50px;
+            background-color: white;
+            margin: 0 5px;
+            align-items: center;
+            justify-content: center;
+        }
+        #footer > div > img {
+            width: 50px;
+            height: 50px;
+        }
+        #footer .selected {
+            background-color: cyan;
+        }
+        .screen {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            flex-direction: column;
+        }
+        .screen > span {
+            position: relative;
+            color: white;
+            font-family: Arial;
+            font-weight: bold;
+            font-size: 25px;
+            margin-bottom: 10px;
+        }
+        .form {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 25px;
+            flex-direction: column;
+            background-color: gray;
+            width: 250px;
+            height: 125px;
+        }
+        .form > span {
+            position: relative;
+            color: white;
+            font-family: Arial;
+            font-weight: bold;
+            font-size: 25px;
+            margin-bottom: 10px;
+        }
+        input {
+            position: relative;
+            margin-bottom: 10px;
+            width: 75%;
+        }
+        #top {
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 425px;
+        }
+        #top > div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            flex-wrap: wrap;
+            width: 265px;
+            height: 55px;
+            background-color: gray;
+            margin: 5px;
+        }
+        #top > div > span {
+            color: white;
+            font-family: Arial;
+            font-size: 15px;
+        }
+    </style>
+    <script src="./libs/matter.min.js"></script>
+    <script src="./libs/pixi.min.js"></script>
+    <script src="./libs/pixi-sound.min.js"></script>
+    <script src="./libs/telegram-web-app.js"></script>
+    <script type="module">
+        import App from './App.js';
+
+        window.addEventListener('DOMContentLoaded', () => window.app = new App());
+    </script>
+</head>
+<body>
+    <div id="ui">
+        <div class="screen">
+            <span id="userBalance">...</span>
+            <button id="playButton">PLAY</button>
+
+            <div id="playForm" style="visibility: hidden; position: absolute;" class="form">
+                <input type="number" value="0" min="0" step="100" id="playAmount">
+                <button id="playConfirm">CONFIRM</button>
+            </div>
+
+            <div id="resultForm" style="visibility: hidden; position: absolute;" class="form">
+                <span id="result"></span>
+                <button id="resultButton">OK</button>
+            </div>
+        </div>
+
+        <div class="screen" style="display: none; top: 45%;">
+            <span>EARN SCREEN - SOON...</span>
+        </div>
+
+        <div class="screen" style="display: none; top: 45%;">
+            <span>TOP GAMES:</span>
+            <div id="top"></div>
+        </div>
+
+        <div class="screen" style="display: none;">
+            <div id="withdrawForm" class="form">
+                <input type="number" value="0" min="0" step="100" id="withdrawAmount">
+                <button id="withdrawConfirm">CONFIRM</button>
+            </div>
+
+            <div id="replenishForm" class="form">
+                <span id="tonRate"></span>
+                <input type="number" value="0" min="0" step="100" id="replenishAmount">
+                <button id="replenishConfirm">CONFIRM</button>
+                <div id="replenishData" style="visibility: hidden; position: absolute;" class="form">
+                    <span id="destinationAddress" style="font-size: 15px;"></span>
+                    <span id="transactionComment" style="font-size: 15px;"></span>
+                    <a id="readyUrl" target="_blank">TO PAYMENT</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="footer">
+            <div data-id="0" class="selected"><img src="./assets/images/separated/home.png"></div>
+            <div data-id="1"><img src="./assets/images/separated/earn.png"></div>
+            <div data-id="2"><img src="./assets/images/separated/score.png"></div>
+            <div data-id="3"><img src="./assets/images/separated/wallet.png"></div>
+        </div>
+    </div>
+
+    <div id="game" style="display: none;">
+        <div class="progressBar">
+            <span id="progressBar-slider" style="width: 0%"></span>
+        </div>
+
+        <span id="score">SCORE: 0</span>
+
+        <canvas></canvas>
+    </div>
+</body>
+</html>
